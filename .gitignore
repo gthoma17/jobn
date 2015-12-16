@@ -37,6 +37,9 @@ pip-delete-this-directory.txt
 # Unit test / coverage reports
 htmlcov/
 .tox/
+
+# Greg
+webui/sessions/
 .coverage
 .coverage.*
 .cache
@@ -107,3 +110,4 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+webui/templates/text_form.html
