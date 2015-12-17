@@ -11,7 +11,7 @@
 #
 # By default this script does nothing.
 
-sh /apps/cosc481/devops/server/runBackend.sh
-sh /apps/cosc481/devops/server/runWebui.sh
+sh /apps/jobn/devops/server/runBackend.sh
+sh /apps/jobn/devops/server/runWebui.sh
 
 exit 0

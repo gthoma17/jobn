@@ -1,3 +1,3 @@
 #!bin/bash
-(python /apps/cosc481/webui/webui.py 8080 &)
+(python /apps/jobn/webui/webui.py 8080 &)
 

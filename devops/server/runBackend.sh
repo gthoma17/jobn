@@ -1,2 +1,2 @@
 #!/bin/bash
-(python /apps/cosc481/backend/backend.py 9002 &)
+(python /apps/jobn/backend/backend.py 9002 &)
