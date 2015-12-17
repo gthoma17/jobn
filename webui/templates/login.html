@@ -31,12 +31,12 @@ $def with (url, apiKey)
 <link type="text/css" rel="stylesheet" href="//www.gstatic.com/authtoolkit/css/gitkit.css" />
 <script type="text/javascript">
   var config = {
-    "widgetUrl": "$url/login",
-    "signInSuccessUrl": "$url",
-    "signOutUrl": "$url/logout",
-    "oobActionUrl": "$url/mail",
+    "widgetUrl": "http://$url/login",
+    "signInSuccessUrl": "http://$url",
+    "signOutUrl": "http://$url/logout",
+    "oobActionUrl": "http://$url/mail",
     "apiKey": "$apiKey",
-    "siteName": "this site",
+    "siteName": "Jobn",
     "signInOptions": ["password","google"]
 }
   // The HTTP POST body should be escaped by the server to prevent XSS
@@ -53,5 +53,4 @@ $def with (url, apiKey)
 <!-- Include the sign in page widget with the matching 'gitkitWidgetDiv' id -->
 <div id="gitkitWidgetDiv"></div>
 <!-- End identity toolkit widget -->
-
 </body></html>

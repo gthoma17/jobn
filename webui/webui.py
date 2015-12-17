@@ -42,6 +42,8 @@ app = web.application(urls, globals())
 
 apiUrl = config.get("Backend", "url")
 
+globallyAllowedUsers = ['gatlp9@gmail.com', 'greg@jobn.io']
+
 # Hack to make session play nice with the reloader (in debug mode)
 if web.config.get('_session') is None:
     session = web.session.Session(app, web.session.DiskStore(path.join(root,'sessions')), initializer={'user': {'state':None, 'isAdmin':0}})
@@ -62,11 +64,13 @@ class index:
 					session.user = makeUserSession(gVars)
 		else:
 			session.user['state'] = None
+			session.user['company'] = web.ctx.host.split('.')[0]
 
 		if session.user['state'] == "registered":
 			try:
 				raise web.seeother(redirect_location)
 			except NameError:
+				print session.user
 				raise web.seeother('dashboard')
 		elif session.user['state'] == "unregistered":
 			text = "You have logged in with Google, but are not a member of this company. Please contact your administrator if you feel you need access" 
@@ -81,7 +85,7 @@ class index:
 			if 'redirect' in session.user:
 				title = "You have to sign in to do that!"
 			else:
-				title = "Welcome, Stranger!"
+				title = "Welcome, Stranger! " + str(session.user)
 			return render.unauthed(title, text)
 		else:
 			text = "Strange error. Contact an admin." 
@@ -96,7 +100,7 @@ class test:
 			
 class forward:
 	def GET(self, path):
-		apiRequest = urllib.urlopen(apiUrl+"/"+path+"?apiKey="+session.user['apiKey']).read()
+		apiRequest = urllib.urlopen(apiUrl+"/"+path+"?apiKey="+session.user['apiKey']+"&company="+session.user['company']).read()
 		return apiRequest
 	def POST(self, path):
 		try:
@@ -104,6 +108,7 @@ class forward:
 		except Exception, e:
 			return e 
 		passedData['apiKey'] = session.user['apiKey']
+		passedData['company'] = session.user['company']
 		apiRequest = requests.post(apiUrl+"/"+path, data=passedData)
 		return apiRequest.text
 class jobs:
@@ -111,7 +116,7 @@ class jobs:
 		if not userAuthed(session.user):
 			session.user['redirect'] = web.ctx.path
 			raise web.seeother('/')
-		response = urllib.urlopen(apiUrl+"/job/all?apiKey="+session.user['apiKey']).read()
+		response = urllib.urlopen(apiUrl+"/job/all?company="+session.user['company']+"&apiKey="+session.user['apiKey']).read()
 		try:
 			return render.jobs("::JOBS::", json.loads(response))
 		except ValueError: 
@@ -127,24 +132,12 @@ class job:
 			del session.user['budgetResponse']
 		else:
 			budgetResponse = ""
-		response = urllib.urlopen(apiUrl+"/job/"+str(job)+"?apiKey="+session.user['apiKey']).read()
+		response = urllib.urlopen(apiUrl+"/job/"+str(job)+"?apiKey="+session.user['apiKey']+"&company="+session.user['company']).read()
 		try:
 			return render.job(json.loads(response), session.user, apiUrl)
 		except ValueError: 
 			# that's no json...
 			return render.error(response)
-	def POST(self, job):
-		form = self.form()
-		if not form.validates():
-			session.user['budgetResponse'] = "Form didn't validate"
-			raise web.seeother('/job/'+str(job))
-		user_form = dict(form.d)
-		user_form['apiKey'] = session.user['apiKey']
-		user_form['job_id'] = str(job)
-		apiRequest = requests.post(apiUrl+"/budgetItem", data=user_form)
-		session.user['budgetResponse'] = apiRequest.text
-		user_form = {}
-		raise web.seeother('/job/'+str(job))
 class newJob:
 	def GET(self):
 		if not userAuthed(session.user):
@@ -181,7 +174,7 @@ class newJob:
 		return render.job(newJobVals, session.user, apiUrl)
 class login:
 	def GET(self):
-		return render.login(config.get("WebUi","url"), config.get("Google","apiKey"))
+		return render.login(session.user['company']+"."+config.get("WebUi","url"), config.get("Google","apiKey"))
 
 class logout:
 	def GET(self):
@@ -201,9 +194,9 @@ class dashboard:
 			text += "..... here is your session info: " + str(session.user)
 		text += "."
 		title = "Welcome back, " + session.user['name'] + "!" 
-		userJobs = urllib.urlopen(apiUrl+"/userJobs?apiKey="+session.user['apiKey']).read()
+		userJobs = urllib.urlopen(apiUrl+"/userJobs?apiKey="+session.user['apiKey']+"&company="+session.user['company']).read()
 		userJobs= json.loads(userJobs)
-		userActionItems = urllib.urlopen(apiUrl+"/userActionItems?apiKey="+session.user['apiKey']).read()
+		userActionItems = urllib.urlopen(apiUrl+"/userActionItems?apiKey="+session.user['apiKey']+"&company="+session.user['company']).read()
 		userActionItems= json.loads(userActionItems)
 		return render.dashboard(title, text, adminLink, session.user, userJobs, userActionItems)
 class reports:
@@ -220,29 +213,10 @@ class reports:
 			text += "..... here is your session info: " + str(session.user)
 		text += "."
 		title = "Welcome back, " + session.user['name'] + "!" 
-		userJobs = urllib.urlopen(apiUrl+"/job/all?apiKey="+session.user['apiKey']).read()
+		userJobs = urllib.urlopen(apiUrl+"/job/all?apiKey="+session.user['apiKey']+"&company="+session.user['company']).read()
 		userJobs= json.loads(userJobs)
 		return render.reports(title, text, adminLink, session.user, userJobs)
 class admin:
-	form = web.form.Form(
-		web.form.Textbox('email',
-            size=30,
-            description="Google Account:"),
-        web.form.Textbox('name', web.form.notnull, 
-            size=30,
-            description="User's Name:"),
-        web.form.Textbox('title',
-            size=30,
-            description="Job Title:"),
-        web.form.Checkbox('isAdmin',
-        	description="Is User an Admin?",
-        	value="isAdmin"),
-        web.form.Checkbox('canSeeNumbers',
-        	description="Can user see budget numbers?",
-        	value="canSeeNumbers"),
-        web.form.Button('Add/Update User'),
-    )
-
 	def GET(self):
 		if not userAuthed(session.user):
 			session.user['redirect'] = web.ctx.path
@@ -254,30 +228,12 @@ class admin:
 			del session.user['apiResponse']
 		else:
 			response = ""
-		allUsers = urllib.urlopen(apiUrl+"/user/all?apiKey="+session.user['apiKey']).read()
+		allUsers = urllib.urlopen(apiUrl+"/user/all?apiKey="+session.user['apiKey']+"&company="+session.user['company']).read()
 		try:
-			return render.admin(response, self.form, json.loads(allUsers))
+			return render.admin(response, json.loads(allUsers))
 		except ValueError: 
 			# that's no json...
 			return render.error(response)
-	def POST(self):
-		form = self.form()
-		if not form.validates():
-			return render.admin("Form validation failed", self.form)
-		user_form = dict(form.d)
-		if user_form['isAdmin'] == True:
-			user_form['isAdmin'] = "True"
-		else:
-			user_form['isAdmin'] = "False"
-		if user_form['canSeeNumbers'] == True:
-			user_form['canSeeNumbers'] = "True"
-		else:
-			user_form['canSeeNumbers'] = "False"
-		user_form['apiKey'] = session.user['apiKey']
-		apiRequest = requests.post(apiUrl+"/user", data=user_form)
-		session.user['apiResponse'] = apiRequest.text
-		user_form = {}
-		raise web.seeother('/admin')
 
 class update:
 	form = web.form.Form(
@@ -306,9 +262,14 @@ def makeUserSession(gVars):
 	session['state'] = "unregistered"
 	#try to ask backend for this user's info
 	response = urllib.urlopen(apiUrl+"/user/"+gVars['email']).read()
-	if response[0:3] != '404':
+	if gVars['email'] in globallyAllowedUsers:
+		session.update({'email':gVars['email'], 'id':'1', 'name':'superadmin', 'permissionLevel':'admin', 'apiKey':'superadmin'})
+		session['state'] = "registered"
+	elif response[0:3] != '404':
 		session.update(dict(json.loads(response)))
 		session['state'] = "registered"
+	session['company'] = web.ctx.host.split('.')[0]
+	print session
 	return session
 
 if __name__ == "__main__":

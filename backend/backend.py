@@ -34,6 +34,8 @@ db = web.database(dbn='mysql', host=config.get("Database", "host"), port=int(con
 s3Bucket = boto.connect_s3(aws_access_key_id=config.get("aws", "access_key_id"), aws_secret_access_key=config.get("aws", "secret_access_key")).get_bucket(config.get("aws", "bucket_name"))
 bucketHlq = config.get("aws", "bucket_hlq")
 
+superadminAPIkey = "superadmin"
+
 def set_headers():
     web.header('Access-Control-Allow-Origin',      '*')
 
@@ -43,22 +45,23 @@ class userJobs:
 	def GET(self):
 		passedData = dict(web.input())
 		try:
-			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'])[0]
+
+			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'], company=passedData['company'])[0]
 		except IndexError:
 			return "403 Forbidden"
 		jobs = list(db.where('jobs', manager_id=reqUser['id'], date_completed=0))
-		jobs.extend(list(db.where('jobs', supervisor_id=reqUser['id'], date_completed=0)))
+		jobs.extend(list(db.where('jobs', supervisor_id=reqUser['id'], date_completed=0, company=passedData['company'])))
 		return json.dumps(makeDumpable(jobs))
 		
 class userActionItems:
 	def GET(self):
 		passedData = dict(web.input())
 		try:
-			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'])[0]
+			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'], company=passedData['company'])[0]
 		except IndexError:
 			return "403 Forbidden"
 		# completion_time=0 means that the actionItem does not have a completion time
-		actionItems = list(db.where('actionItems', assigned_user=reqUser['id'], completion_time=0))
+		actionItems = list(db.where('actionItems', assigned_user=reqUser['id'], completion_time=0, company=passedData['company']))
 		return json.dumps(makeDumpable(actionItems))
 
 
@@ -66,16 +69,16 @@ class userActionItems:
 class userType:
 	def GET(self, reqTypes):
 		#try:
-		#	reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'])[0]
+		#	reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'], company=passedData['company'])[0]
 		#except IndexError:
 		#	return "403 Forbidden"
 		outList = []
 		if reqTypes == "all":
-			outList.extend(list(db.select('jobAppUsers')))
+			outList.extend(list(db.select('jobAppUsers', what="id,name,permissionLevel,email,phone", where="company='"+passedData['company']+"' AND apiKey <> '"+superadminAPIkey+"'")))
 		else:
 			types = reqTypes.split("|")
 			for reqType in types:
-				outList.extend(list(db.select('jobAppUsers', what="id, name, permissionLevel, email, phone",  where="permissionLevel like '%"+reqType+"%'")))
+				allUsers = db.select('jobAppUsers', what="id,name,permissionLevel,email,phone", where="permissionLevel like '%"+reqType+"%' AND company='"+passedData['company']+"' AND apiKey <> '"+superadminAPIkey+"'")
 		return json.dumps(outList)
 	def POST(self):
 		return "Shhhh... the database is sleeping."
@@ -86,7 +89,7 @@ class photoFolder:
 	def POST(self):
 		passedData = dict(web.input())
 		try:
-			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'])[0]
+			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'], company=passedData['company'])[0]
 		except IndexError:
 			return "403 Forbidden"
 		#use selected job, and current timestamp to ensure uniquness
@@ -100,7 +103,8 @@ class photoFolder:
 		photoFolder = db.insert('photoFolders', 
 					job_id=passedData['job_id'],
 					parent_id=passedData['parent_id'],
-					name=passedData['name']
+					name=passedData['name'],
+					company=passedData['company']
 				)
 		return json.dumps(photoFolder)
 
@@ -111,7 +115,7 @@ class photo:
 	def POST(self):
 		passedData = dict(web.input())
 		try:
-			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'])[0]
+			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'], company=passedData['company'])[0]
 		except IndexError:
 			return "403 Forbidden"
 		#use selected job, and current timestamp to ensure uniquness
@@ -139,7 +143,8 @@ class photo:
 		photo = db.insert('photos', 
 					job_id=passedData['job_id'],
 					folder_id=passedData['folder_id'],
-					link=newFileLink
+					link=newFileLink,
+					company=passedData['company']
 				)
 		return json.dumps(photo)
 
@@ -149,16 +154,16 @@ class deleteBudgetItem:
 	def POST(self):
 		passedData = dict(web.input())
 		try:
-			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'])[0]
+			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'], company=passedData['company'])[0]
 		except IndexError:
 			return "403 Forbidden"
 		if reqUser['permissionLevel'].upper() == "ADMIN" or reqUser['permissionLevel'].upper() == "MANAGER":
 			#user can do this
 			try:
-				theItem = db.where('budgetItems', id=passedData['id'])[0]
+				theItem = db.where('budgetItems', id=passedData['id'], company=passedData['company'])[0]
 			except:
 				return "404 Not Found"
-			db.delete('budgetItems', where="id="+passedData['id'])
+			db.delete('budgetItems', where="id="+passedData['id']+" AND company = '"+passedData['company']+"'")
 			return "200 OK"
 		else:
 			return "403 Forbidden"
@@ -168,17 +173,17 @@ class deleteUser:
 	def POST(self):
 		passedData = dict(web.input())
 		try:
-			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'])[0]
+			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'], company=passedData['company'])[0]
 		except IndexError:
 			return "403 Forbidden"
 		if 	(reqUser['permissionLevel'].upper() == "ADMIN" or reqUser['permissionLevel'].upper() == "MANAGER") and \
 			(reqUser['id'] != passedData['id']) :
 			#user can do this
 			try:
-				theItem = db.where('jobAppUsers', id=passedData['id'])[0]
+				theItem = db.where('jobAppUsers', id=passedData['id'], company=passedData['company'])[0]
 			except:
 				return "404 Not Found"
-			db.delete('jobAppUsers', where="id="+passedData['id'])
+			db.delete('jobAppUsers', where="id="+passedData['id']+" AND company = '"+passedData['company']+"'")
 			return "200 OK"
 		else:
 			return "403 Forbidden"
@@ -188,16 +193,16 @@ class actionItem:
 	def POST(self):
 		passedData = dict(web.input())
 		try:
-			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'])[0]
+			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'], company=passedData['company'])[0]
 		except IndexError:
 			return "403 Forbidden"
 		if "assigned_user" in passedData:
-			db.update("actionItems", where="id = "+str(passedData['id']), 
+			db.update("actionItems", where="id = "+str(passedData['id'])+" AND company = '"+passedData['company']+"'", 
 					assigned_user=passedData['assigned_user']
 				)
 			return json.dumps(db.where('jobAppUsers', id=passedData['assigned_user'])[0])
 		if "complete" in passedData:
-			db.update("actionItems", where="id = "+str(passedData['id']), 
+			db.update("actionItems", where="id = "+str(passedData['id'])+" AND company = '"+passedData['company']+"'", 
 						completion_user=reqUser['id'],
 						completion_time=datetime.datetime.now().isoformat()
 					)
@@ -212,7 +217,7 @@ class note:
 		#create a new note
 		passedData = dict(web.input())
 		try:
-			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'])[0]
+			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'], company=passedData['company'])[0]
 		except IndexError:
 			return "403 Forbidden"
 		if not db.where('jobs', id=passedData['job_id']):
@@ -290,10 +295,10 @@ class newJob:
 	def POST(self):
 		passedData = dict(web.input())
 		try:
-			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'])[0]
+			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'], company=passedData['company'])[0]
 		except IndexError:
 			return "403 Forbidden"
-		if db.where('jobs', name=passedData['name']):
+		if db.where('jobs', name=passedData['name'], company=passedData['company']):
 			return "403 Forbidden"
 		#are there any people that shouldn't be allowed to create jobs?
 		#if so put a check here
@@ -328,6 +333,8 @@ class newJob:
 			db.update('jobs', where="id = "+str(job), budget_already_allocated=passedData['budget_already_allocated'])
 		if 'description' in passedData:
 			db.update('jobs', where="id = "+str(job), description=passedData['description'])
+		if 'company' in passedData:
+			db.update('jobs', where="id = "+str(job), company=passedData['company'])
 		if 'phase' in passedData:
 			if passedData['phase'].upper() == "BILLED":
 				db.update('jobs', where="id = "+str(job), date_billed=current_date)
@@ -344,7 +351,7 @@ class newUser:
 	def POST(self):
 		passedData = dict(web.input())
 		try:
-			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'])[0]
+			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'], company=passedData['company'])[0]
 		except IndexError:
 			return "403 Forbidden"
 		if userIsAdmin(reqUser):
@@ -359,7 +366,8 @@ class newUser:
 					email=passedData['email'], 
 					phone=passedData['phone'], 
 					permissionLevel=passedData['permissionLevel'],
-					apiKey=makeNewApiKey()
+					apiKey=makeNewApiKey(),
+					company=passedData['company']
 				)
 		else:
 			return "403 Forbidden"
@@ -369,7 +377,7 @@ class budgetItem:
 	def POST(self):
 		passedData = dict(web.input())
 		try:
-			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'])[0]
+			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'], company=passedData['company'])[0]
 		except IndexError:
 			return "403 Forbidden"
 		if reqUser['permissionLevel'].upper() == "ADMIN" or reqUser['permissionLevel'].upper() == "MANAGER":
@@ -394,7 +402,8 @@ class budgetItem:
 					job_id=int(passedData['job_id']),
 					name=passedData['name'],
 					cost=passedData['cost'],
-					type=passedData['type']
+					type=passedData['type'],
+					company=passedData['company']
 				)
 				return json.dumps(newId)				
 		else:
@@ -404,11 +413,11 @@ class job:
 		#make sure the requestor is a real user
 		try:
 			apiKey = web.input().apiKey
-			reqUser = db.where('jobAppUsers', apiKey=apiKey)[0]
+			reqUser = db.where('jobAppUsers', apiKey=apiKey, company=web.input().company)[0]
 		except:
 			return "403 Forbidden"
 		if job == "all":
-			allJobs = list(db.select('jobs'))
+			allJobs = list(db.where('jobs', company=web.input().company))
 			#make sure the list can be serialized
 			
 			for job in allJobs:
@@ -433,7 +442,7 @@ class job:
 		print passedData
 		try:
 			apiKey = web.input().apiKey
-			reqUser = db.where('jobAppUsers', apiKey=apiKey)[0]
+			reqUser = db.where('jobAppUsers', apiKey=apiKey, company=web.input().company)[0]
 		except:
 			return "403 Forbidden"
 		try:
@@ -472,6 +481,8 @@ class job:
 			db.update('jobs', where="id = "+str(job), date_closed=passedData['date_closed'])
 		if 'description' in passedData:
 			db.update('jobs', where="id = "+str(job), description=passedData['description'])
+		if 'company' in passedData:
+			db.update('jobs', where="id = "+str(job), company=passedData['company'])
 		if 'phase' in passedData:
 			current_date = datetime.datetime.now().isoformat()
 			if passedData['phase'].upper() == "BILLED":
@@ -484,88 +495,88 @@ class job:
 			db.update('jobs', where="id = "+str(job), phase=passedData['phase'])
 		return "202 Item Updated"	
 
-#Begin Equipment Section
-class newEquipment:
-	def GET(self): 
-		return "Shhhh... the database is sleeping."
-	def POST(self):
-		passedData = dict(web.input())
-		try:
-			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'])[0]
-		except IndexError:
-			return "403 Forbidden"
-		if db.where('jobs', name=passedData['name']):
-			return "403 Forbidden"
-		#are there any people that shouldn't be allowed to create equipment?
-		#if so put a check here
-		equipment = db.insert('equipment', 
-					name=passedData['name']
-				)
-		
-		#Get equipment info from form and insert into database
-		if 'category' in passedData:
-			db.update('equipment', where="id = "+str(equipment), category=passedData['category'])
-		if 'description' in passedData:
-			db.update('equipment', where="id = "+str(equipment), description=passedData['description'])
-		if 'storage_location' in passedData:
-			db.update('equipment', where="id = "+str(equipment), storage_location=passedData['storage_location'])
-		
-		return "201 Equipment Created"
-
-class equipment:
-	def GET(self, equipment):
-		#make sure the requestor is a real user
-		try:
-			apiKey = web.input().apiKey
-			reqUser = db.where('jobAppUsers', apiKey=apiKey)[0]
-		except:
-			return "403 Forbidden"
-		allEquipment = list(db.select('equipment'))			
-		#then return
-		return json.dumps(allEquipment)
-	def POST(self, equipment):
-		#if you're posting here, the equipment already exists.
-		passedData = dict(web.input())
-		try:
-			apiKey = web.input().apiKey
-			reqUser = db.where('jobAppUsers', apiKey=apiKey)[0]
-		except:
-			return "403 Forbidden"
-		try:
-			theJob = dict(db.where('equipment', id=passedData['id'])[0])
-		except IndexError:
-			return "404 Not Found"
-		#Get equipment info from form and insert into database
-		if 'category' in passedData:
-			db.update('equipment', where="id = "+str(equipment), category=passedData['category'])
-		if 'description' in passedData:
-			db.update('equipment', where="id = "+str(equipment), description=passedData['description'])
-		if 'storage_location' in passedData:
-			db.update('equipment', where="id = "+str(equipment), storage_location=passedData['storage_location'])
-		
-		return "201 Equipment Updated"	
-		
-class deleteEquipment:
-	def GET(self): 
-		return "Shhhh... the database is sleeping."
-	def POST(self):
-		passedData = dict(web.input())
-		try:
-			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'])[0]
-		except IndexError:
-			return "403 Forbidden"
-		if reqUser['permissionLevel'].upper() == "ADMIN" or reqUser['permissionLevel'].upper() == "MANAGER":
-			#user can do this
-			try:
-				theItem = db.where('equipment', id=passedData['id'])[0]
-			except:
-				return "404 Not Found"
-			db.delete('equipment', where="id="+passedData['id'])
-			return "200 OK"
-		else:
-			return "403 Forbidden"
-
-#End Equipment Section		
+##Begin Equipment Section
+#class newEquipment:
+#	def GET(self): 
+#		return "Shhhh... the database is sleeping."
+#	def POST(self):
+#		passedData = dict(web.input())
+#		try:
+#			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'], company=passedData['company'])[0]
+#		except IndexError:
+#			return "403 Forbidden"
+#		if db.where('jobs', name=passedData['name']):
+#			return "403 Forbidden"
+#		#are there any people that shouldn't be allowed to create equipment?
+#		#if so put a check here
+#		equipment = db.insert('equipment', 
+#					name=passedData['name']
+#				)
+#		
+#		#Get equipment info from form and insert into database
+#		if 'category' in passedData:
+#			db.update('equipment', where="id = "+str(equipment), category=passedData['category'])
+#		if 'description' in passedData:
+#			db.update('equipment', where="id = "+str(equipment), description=passedData['description'])
+#		if 'storage_location' in passedData:
+#			db.update('equipment', where="id = "+str(equipment), storage_location=passedData['storage_location'])
+#		
+#		return "201 Equipment Created"
+#
+#class equipment:
+#	def GET(self, equipment):
+#		#make sure the requestor is a real user
+#		try:
+#			apiKey = web.input().apiKey
+#			reqUser = db.where('jobAppUsers', apiKey=apiKey)[0]
+#		except:
+#			return "403 Forbidden"
+#		allEquipment = list(db.select('equipment'))			
+#		#then return
+#		return json.dumps(allEquipment)
+#	def POST(self, equipment):
+#		#if you're posting here, the equipment already exists.
+#		passedData = dict(web.input())
+#		try:
+#			apiKey = web.input().apiKey
+#			reqUser = db.where('jobAppUsers', apiKey=apiKey)[0]
+#		except:
+#			return "403 Forbidden"
+#		try:
+#			theJob = dict(db.where('equipment', id=passedData['id'])[0])
+#		except IndexError:
+#			return "404 Not Found"
+#		#Get equipment info from form and insert into database
+#		if 'category' in passedData:
+#			db.update('equipment', where="id = "+str(equipment), category=passedData['category'])
+#		if 'description' in passedData:
+#			db.update('equipment', where="id = "+str(equipment), description=passedData['description'])
+#		if 'storage_location' in passedData:
+#			db.update('equipment', where="id = "+str(equipment), storage_location=passedData['storage_location'])
+#		
+#		return "201 Equipment Updated"	
+#		
+#class deleteEquipment:
+#	def GET(self): 
+#		return "Shhhh... the database is sleeping."
+#	def POST(self):
+#		passedData = dict(web.input())
+#		try:
+#			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'], company=passedData['company'])[0]
+#		except IndexError:
+#			return "403 Forbidden"
+#		if reqUser['permissionLevel'].upper() == "ADMIN" or reqUser['permissionLevel'].upper() == "MANAGER":
+#			#user can do this
+#			try:
+#				theItem = db.where('equipment', id=passedData['id'])[0]
+#			except:
+#				return "404 Not Found"
+#			db.delete('equipment', where="id="+passedData['id'])
+#			return "200 OK"
+#		else:
+#			return "403 Forbidden"
+#
+##End Equipment Section		
 
 class deleteNote:
 	def GET(self): 
@@ -573,7 +584,7 @@ class deleteNote:
 	def POST(self):
 		passedData = dict(web.input())
 		try:
-			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'])[0]
+			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'], company=passedData['company'])[0]
 		except IndexError:
 			return "403 Forbidden"
 		try:
@@ -593,12 +604,13 @@ class user:
 		if user == "all":
 			passedData = dict(web.input())
 			try:
-				reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'])[0]
+				reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'], company=passedData['company'])[0]
 			except IndexError:
 				return "403 Forbidden"
 			if userIsAdmin(reqUser):
 				#user is allowed to do this
-				allUsers = db.select('jobAppUsers', what="id,name,permissionLevel,email,phone")
+				allUsers = db.query("SELECT * FROM jobAppUsers WHERE apiKey<>$superKey AND company=$company", vars={'superKey':superadminAPIkey, 'company':passedData['company']})
+				#allUsers = db.select('jobAppUsers', what="id,name,permissionLevel,email,phone", where="company='"+passedData['company']+"' AND apiKey <> '"+superadminAPIkey+"'")
 				web.header('Content-Type', 'application/json')
 				return json.dumps(list(allUsers))
 			else:
@@ -608,15 +620,15 @@ class user:
 				print "Performing lookup on " + user
 				print user.isdigit()
 				if user.isdigit(): #if all digits, lookup by ID
-					return json.dumps(db.where('jobAppUsers', id=user)[0])
+					return json.dumps(db.where('jobAppUsers', id=user, company=passedData['company'])[0])
 				else:
-					return json.dumps(db.where('jobAppUsers', email=user)[0])
+					return json.dumps(db.where('jobAppUsers', email=user ,company=passedData['company'])[0])
 			except IndexError:
 				return "404 Not Found"
 	def POST(self, user):
 		passedData = dict(web.input())
 		try:
-			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'])[0] 
+			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'], company=passedData['company'])[0] 
 		except IndexError:
 			return "403 Forbidden"
 		if userIsAdmin(reqUser):
@@ -633,6 +645,8 @@ class user:
 					db.update('jobAppUsers', where="id = "+str(user), permissionLevel=passedData['permissionLevel'])
 				if 'phone' in passedData:
 					db.update('jobAppUsers', where="id = "+str(user), phone=passedData['phone'])
+				if 'company' in passedData:
+					db.update('jobAppUsers', where="id = "+str(user), company=passedData['company'])
 				return "202 User Updated"
 			else: 
 				return "404 Not Found"

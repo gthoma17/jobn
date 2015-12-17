@@ -35,7 +35,7 @@ def main():
 		cursor.execute('use '+DATABASE)
 
 	createTables(cursor)
-	#createTestData(cursor)
+	createTestData(cursor)
 
 	#we're done here. close up shop
 	db_connection.commit()
@@ -86,50 +86,50 @@ def createTables(cursor):
 def createTestData(cursor):
 	if tblEmpty("jobAppUsers", cursor):
 		createUsers(cursor)
-	if tblEmpty("subs", cursor):
-		createSubs(cursor)
-	if tblEmpty("contacts", cursor):
-		createContacts(cursor)
-	if tblEmpty("equipment", cursor):
-		createEquipment(cursor)
-	if tblEmpty("dates", cursor):
-		createDates(cursor)
-	if tblEmpty("jobs", cursor):
-		createJobs(cursor)
-
-	allJobs = []
-	cursor.execute('SELECT id FROM jobs')
-	for (row_id,) in cursor:
-		allJobs.append(row_id)
-	allUsers = []
-	cursor.execute('SELECT id FROM jobAppUsers')
-	for (row_id,) in cursor:
-		allUsers.append(row_id)
-	allSubs = []
-	cursor.execute('SELECT id FROM subs')
-	for (row_id,) in cursor:
-		allSubs.append(row_id)
-
-	if tblEmpty("budgetItems", cursor):
-		createBudgetItems(cursor, allJobs)
-	if tblEmpty("dailyReports", cursor):
-		createReports(cursor, allJobs, allUsers)
-	if tblEmpty("notes", cursor):
-		createNotes(cursor, allJobs, allUsers)
-	if tblEmpty("actionItems", cursor):
-		createActionItems(cursor, allJobs, allUsers)
-	if tblEmpty("subContracts", cursor):
-		createSubContracts(cursor, allJobs, allSubs)
-	if tblEmpty("maxBudgets", cursor):
-		createMaxBudgets(cursor, allJobs, allUsers)
-	if tblEmpty("scopes", cursor):
-		createScopes(cursor, allJobs)
-	if tblEmpty("fullEstimates", cursor):
-		createFullEstimates(cursor, allJobs)
-	if tblEmpty("photoFolders", cursor):
-		createPhotoFolders(cursor, allJobs)
-	if tblEmpty("photos", cursor):
-		createPhotos(cursor, allJobs)
+	#if tblEmpty("subs", cursor):
+	#	createSubs(cursor)
+	#if tblEmpty("contacts", cursor):
+	#	createContacts(cursor)
+	#if tblEmpty("equipment", cursor):
+	#	createEquipment(cursor)
+	#if tblEmpty("dates", cursor):
+	#	createDates(cursor)
+	#if tblEmpty("jobs", cursor):
+	#	createJobs(cursor)
+	#	
+	#allJobs = []
+	#cursor.execute('SELECT id FROM jobs')
+	#for (row_id,) in cursor:
+	#	allJobs.append(row_id)
+	#allUsers = []
+	#cursor.execute('SELECT id FROM jobAppUsers')
+	#for (row_id,) in cursor:
+	#	allUsers.append(row_id)
+	#allSubs = []
+	#cursor.execute('SELECT id FROM subs')
+	#for (row_id,) in cursor:
+	#	allSubs.append(row_id)
+	#	
+	#if tblEmpty("budgetItems", cursor):
+	#	createBudgetItems(cursor, allJobs)
+	#if tblEmpty("dailyReports", cursor):
+	#	createReports(cursor, allJobs, allUsers)
+	#if tblEmpty("notes", cursor):
+	#	createNotes(cursor, allJobs, allUsers)
+	#if tblEmpty("actionItems", cursor):
+	#	createActionItems(cursor, allJobs, allUsers)
+	#if tblEmpty("subContracts", cursor):
+	#	createSubContracts(cursor, allJobs, allSubs)
+	#if tblEmpty("maxBudgets", cursor):
+	#	createMaxBudgets(cursor, allJobs, allUsers)
+	#if tblEmpty("scopes", cursor):
+	#	createScopes(cursor, allJobs)
+	#if tblEmpty("fullEstimates", cursor):
+	#	createFullEstimates(cursor, allJobs)
+	#if tblEmpty("photoFolders", cursor):
+	#	createPhotoFolders(cursor, allJobs)
+	#if tblEmpty("photos", cursor):
+	#	createPhotos(cursor, allJobs)
 
 def createDatabase(DATABASE, cursor): 
 	#create our database
@@ -161,6 +161,7 @@ def createJobsTbl(cursor):
 	  date_billed TIMESTAMP,
 	  date_closed TIMESTAMP,
 	  description TEXT(65535),
+	  company TEXT(65535),
 	  PRIMARY KEY(id)
 	)
 	""")
@@ -174,6 +175,7 @@ def createBudgetItemsTbl(cursor):
 	  name TEXT(8000),
 	  cost VARCHAR(100),
 	  type VARCHAR(100),
+	  company TEXT(65535),
 	  PRIMARY KEY(id)
 	)
 	""")
@@ -188,6 +190,7 @@ def createNotesTbl(cursor):
 	  contents TEXT(65535),
 	  edit_user INTEGER,
 	  edit_time TIMESTAMP,
+	  company TEXT(65535),
 	  PRIMARY KEY(id)
 	)
 	""")
@@ -206,6 +209,7 @@ def createUsersTbl(cursor):
 	  email TEXT(65535),
 	  phone VARCHAR(255),
 	  apiKey TEXT(65535),
+	  company TEXT(65535),
 	  PRIMARY KEY(id)
 	)
 	""")
@@ -223,6 +227,7 @@ def createReportsTbl(cursor):
 	  edit_time TIMESTAMP,
 	  contents TEXT(65535),
 	  people_on_site TEXT(65535),
+	  company TEXT(65535),
 	  PRIMARY KEY(id)
 	)
 	""")
@@ -240,6 +245,7 @@ def createActionItemsTbl(cursor):
 	  edit_user INTEGER,
 	  edit_time TIMESTAMP,
 	  contents TEXT(65535),
+	  company TEXT(65535),
 	  PRIMARY KEY(id)
 	)
 	""")
@@ -253,6 +259,7 @@ def createSubsTbl(cursor):
 	  company_email TEXT(65535),
 	  company_fax TEXT(65535),
 	  company_address TEXT(65535),
+	  company TEXT(65535),
 	  PRIMARY KEY(id)
 	)
 	""")
@@ -264,6 +271,7 @@ def createSubContractsTbl(cursor):
 	  sub_id INTEGER,
 	  job_id INTEGER,
 	  link TEXT(65535),
+	  company TEXT(65535),
 	  PRIMARY KEY(id)
 	)
 	""")
@@ -276,6 +284,7 @@ def createJobContactsTbl(cursor):
 	  job_id INTEGER,
 	  role TEXT(65535),
 	  description TEXT(65535),
+	  company TEXT(65535),
 	  PRIMARY KEY(id)
 	)
 	""")
@@ -290,6 +299,7 @@ def createContactsTbl(cursor):
 	  email TEXT(65535),
 	  fax TEXT(65535),
 	  address TEXT(65535),
+	  company TEXT(65535),
 	  PRIMARY KEY(id)
 	)
 	""")
@@ -302,6 +312,7 @@ def createEquipmentTbl(cursor):
 	  type TEXT(65535),
 	  description TEXT(65535),
 	  storage_location TEXT(65535),
+	  company TEXT(65535),
 	  PRIMARY KEY(id)
 	)
 	""")
@@ -314,6 +325,7 @@ def createMaxBudgetsTbl(cursor):
 	  author_id INTEGER,
 	  entry_time TIMESTAMP,
 	  amount TEXT(65535),
+	  company TEXT(65535),
 	  PRIMARY KEY(id)
 	)
 	""")
@@ -328,6 +340,7 @@ def createDatesTbl(cursor):
 	  month_name VARCHAR(10),
 	  is_holiday BOOLEAN,
 	  is_weekend BOOLEAN,
+	  company TEXT(65535),
 	  PRIMARY KEY(id)
 	)
 	""")
@@ -339,6 +352,7 @@ def createEquipmentScheduleTbl(cursor):
 	  equipment_id INTEGER,
 	  job_id INTEGER,
 	  full_date DATE,
+	  company TEXT(65535),
 	  PRIMARY KEY(id)
 	)
 	""")
@@ -350,6 +364,7 @@ def createUserScheduleTbl(cursor):
 	  user_id INTEGER,
 	  job_id INTEGER,
 	  full_date DATE,
+	  company TEXT(65535),
 	  PRIMARY KEY(id)
 	)
 	""")
@@ -361,6 +376,7 @@ def createScopesTbl(cursor):
 	  job_id INTEGER,
 	  link TEXT(65535),
 	  upload_time TIMESTAMP,
+	  company TEXT(65535),
 	  PRIMARY KEY(id)
 	)
 	""")
@@ -372,6 +388,7 @@ def createFullEstimatesTbl(cursor):
 	  job_id INTEGER,
 	  link TEXT(65535),
 	  upload_time TIMESTAMP,
+	  company TEXT(65535),
 	  PRIMARY KEY(id)
 	)
 	""")
@@ -383,6 +400,7 @@ def createPhotoFoldersTbl(cursor):
 	  job_id INTEGER,
 	  parent_id INTEGER,
 	  name TEXT(65535),
+	  company TEXT(65535),
 	  PRIMARY KEY(id)
 	)
 	""")
@@ -395,6 +413,7 @@ def createPhotosTbl(cursor):
 	  folder_id INTEGER,
 	  link TEXT(65535),
 	  upload_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	  company TEXT(65535),
 	  PRIMARY KEY(id)
 	)
 	""")
@@ -403,21 +422,17 @@ def createUsers(cursor):
 	print "creating data for table: users"
 	addUser = """
 	INSERT INTO jobAppUsers
-		(id, name, permissionLevel, email, apiKey)
+		(id, name, permissionLevel, email, apiKey, company)
     VALUES
-    	(NULL, {0}, {1}, {2}, {3})
+    	(NULL, {0}, {1}, {2}, {3}, {4})
 	"""
 	usersToMake = [
-		{"name":"Greg","permissionLevel":"Admin","email":"gatlp9@gmail.com"},
-		{"name":"Trevor","permissionLevel":"Admin","email":"6573755@gmail.com"},
-		{"name":"Tijana","permissionLevel":"Admin","email":"tmilovan@emich.edu"},
-		{"name":"Brianna","permissionLevel":"Admin","email":"bwoell@gmail.com"},
-		{"name":"Hanna","permissionLevel":"Admin","email":"hjohns25@emich.edu"},
-		{"name":"Devon","permissionLevel":"Admin","email":"hawkinsd90@gmail.com"}
+		{"name":"Greg","permissionLevel":"Admin","email":"gatlp9@gmail.com","company":"venture", "apiKey":"superadmin"},
+		{"name":"Trevor","permissionLevel":"Admin","email":"6573755@gmail.com","company":"venture", "apiKey":makeNewApiKey(cursor)},
 	]
 	for user in usersToMake:
 		apiKey = makeNewApiKey(cursor)
-		thisUserAdd = addUser.format(sanitize(user['name']), sanitize(user['permissionLevel']), sanitize(user['email']), sanitize(apiKey))
+		thisUserAdd = addUser.format(sanitize(user['name']), sanitize(user['permissionLevel']), sanitize(user['email']), sanitize(user['apiKey']), sanitize(user['company']))
 		cursor.execute(thisUserAdd)
 def createSubs(cursor):
 	print "creating data for table: subs"
