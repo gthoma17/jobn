@@ -23,7 +23,7 @@ cp /apps/jobn/devops/server/rc.local /etc/rc.local
 cp /apps/jobn/devops/server/jobn-monit /etc/monit/conf.d
 cp /apps/jobn/devops/server/nginx_config /etc/nginx/sites-enabled/default
 #create the database
-cd /apps/backend
+cd /apps/jobn/backend
 python setup_database.py
 #reboot the server
 reboot now
