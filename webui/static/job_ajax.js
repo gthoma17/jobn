@@ -577,6 +577,7 @@ function budgetItemAjax(itemId){
 function makeUsersDropdown(type, selectId){
     var selectId = selectId;
     $.get( "/forward/users/type/"+type, function(data){
+        $(selectId).html("");
         var data = jQuery.parseJSON(data);
         data.forEach(function(obj) {
             option = "<option value=\""+obj.id+"\">"+obj.name+"</option>";

@@ -85,7 +85,7 @@ class index:
 			if 'redirect' in session.user:
 				title = "You have to sign in to do that!"
 			else:
-				title = "Welcome, Stranger! " + str(session.user)
+				title = "Welcome, Stranger! "
 			return render.unauthed(title, text)
 		else:
 			text = "Strange error. Contact an admin." 
@@ -260,15 +260,15 @@ def userAuthed(user):
 def makeUserSession(gVars):
 	session = gVars
 	session['state'] = "unregistered"
+	session['company'] = web.ctx.host.split('.')[0]
 	#try to ask backend for this user's info
-	response = urllib.urlopen(apiUrl+"/user/"+gVars['email']).read()
+	response = urllib.urlopen(apiUrl+"/user/"+gVars['email']+"?company="+session['company']).read()
 	if gVars['email'] in globallyAllowedUsers:
 		session.update({'email':gVars['email'], 'id':'1', 'name':'superadmin', 'permissionLevel':'admin', 'apiKey':'superadmin'})
 		session['state'] = "registered"
 	elif response[0:3] != '404':
 		session.update(dict(json.loads(response)))
 		session['state'] = "registered"
-	session['company'] = web.ctx.host.split('.')[0]
 	print session
 	return session
 

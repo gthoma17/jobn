@@ -68,6 +68,7 @@ class userActionItems:
 		
 class userType:
 	def GET(self, reqTypes):
+		passedData = dict(web.input())
 		#try:
 		#	reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'], company=passedData['company'])[0]
 		#except IndexError:
@@ -197,12 +198,12 @@ class actionItem:
 		except IndexError:
 			return "403 Forbidden"
 		if "assigned_user" in passedData:
-			db.update("actionItems", where="id = "+str(passedData['id'])+" AND company = '"+passedData['company']+"'", 
+			db.update("actionItems", where="id = "+str(passedData['id']), 
 					assigned_user=passedData['assigned_user']
 				)
 			return json.dumps(db.where('jobAppUsers', id=passedData['assigned_user'])[0])
 		if "complete" in passedData:
-			db.update("actionItems", where="id = "+str(passedData['id'])+" AND company = '"+passedData['company']+"'", 
+			db.update("actionItems", where="id = "+str(passedData['id']), 
 						completion_user=reqUser['id'],
 						completion_time=datetime.datetime.now().isoformat()
 					)
@@ -601,8 +602,8 @@ class deleteNote:
 
 class user:
 	def GET(self, user):
+		passedData = dict(web.input())
 		if user == "all":
-			passedData = dict(web.input())
 			try:
 				reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'], company=passedData['company'])[0]
 			except IndexError:
