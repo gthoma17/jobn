@@ -1,4 +1,6 @@
 var imgData;
+var scopeData;
+var estimateData;
 var currentPhotoFolder = "-1";
 
 //**************************Start Photos stuff********************************************************************************************
@@ -71,13 +73,13 @@ function createNewPhotoFolder(folderData, folderID) {
 
 function prepPhotos() {
     //things that have to happen every time a new photo is added
-    document.getElementById('img-file').onchange = function (e) {loadFileFromInput(e.target);};
+    document.getElementById('img-file').onchange = function (e) {loadPhotoFromInput(e.target);};
     $('#cancelImage').click(function(){
         imgData = {}
         $('#img-preview').removeAttr("src");
         $('#img-preview-container').hide();
         $("#img-file").replaceWith($("#img-file").clone());
-        document.getElementById('img-file').onchange = function (e) {loadFileFromInput(e.target);};
+        document.getElementById('img-file').onchange = function (e) {loadPhotoFromInput(e.target);};
     });
     $('#submitImage').click(function(){
         $('#img-loader').show()
@@ -102,7 +104,7 @@ function prepPhotos() {
         currentPhotoFolder = itemId;
     });
 }
-function loadFileFromInput(input) {
+function loadPhotoFromInput(input) {
     var reader; 
     if (input.files && input.files[0]) {
         var file = input.files[0];
@@ -919,8 +921,97 @@ function jobEditInit(){
 	$("#edit-job-save").click(function(){updateJobInfo()});
     makeUsersDropdown("all", "#edit-job-supervisor")
     makeUsersDropdown("all", "#edit-job-manager")
-}
+    document.getElementById('estimate-file').onchange = function (e) {loadEstimateFromInput(e.target);};
+    document.getElementById('scope-file').onchange = function (e) {loadScopeFromInput(e.target);};
+    $("#input-scope").hide();
+    $("#add-scope").hide();
+    $("#input-estimate").hide();
+    $("#add-estimate").hide();
+    $("#button-add-scope").click(function(){
+        $("#input-scope").show();
+    })
+    $("#cancel-scope").click(function(){
+        $("#input-file").replaceWith($("#input-file").clone());
+        $("#input-scope").hide();
+        $('#add-scope').hide()
+        scopeData = {};
+    })
+    $("#submit-scope").click(function(){
+        $.post("/forward/scope", JSON.stringify(scopeData))
+            .done(
+                function(response) {
+                    console.log("response: " + response)
+                    if (apiResponseIsGood(response)) {
+                        console.log("Good.")
+                    };
+                }
+            );
+    })
 
+    $("#button-add-estimate").click(function(){
+        $("#input-estimate").show();
+    })
+    $("#cancel-estimate").click(function(){
+        $("#estimate-file").replaceWith($("#estimate-file").clone());
+        $("#input-estimate").hide();
+        $('#add-estimate').hide()
+        scopeData = {};
+    })
+    $("#submit-estimate").click(function(){
+        $.post("/forward/estimate", JSON.stringify(estimateData))
+            .done(
+                function(response) {
+                    console.log("response: " + response)
+                    if (apiResponseIsGood(response)) {
+                        console.log("Good.")
+                    };
+                }
+            );
+    })
+
+}
+function loadScopeFromInput(input) {
+    var reader; 
+    if (input.files && input.files[0]) {
+        var file = input.files[0];
+        reader = new FileReader();
+        reader.readAsDataURL(file);
+        //filereaders run on a different thread, so we
+        // need to wait for it to finish it's work before we continue
+        reader.onload = function (e) {
+            scopeData = {}
+            scopeData.name = file.name
+            scopeData.lastModified = file.lastModified
+            scopeData.type = file.type
+            scopeData.file_extension = (file.name).substr((file.name).lastIndexOf('.'))
+            scopeData.job_id = $('#jobId').text()
+            scopeData.base64_image = reader.result
+            console.log(scopeData)
+            $('#add-scope').show()
+        }
+    }
+}
+function loadEstimateFromInput(input) {
+    var reader; 
+    if (input.files && input.files[0]) {
+        var file = input.files[0];
+        reader = new FileReader();
+        reader.readAsDataURL(file);
+        //filereaders run on a different thread, so we
+        // need to wait for it to finish it's work before we continue
+        reader.onload = function (e) {
+            estimateData = {}
+            estimateData.name = file.name
+            estimateData.lastModified = file.lastModified
+            estimateData.type = file.type
+            estimateData.file_extension = (file.name).substr((file.name).lastIndexOf('.'))
+            estimateData.job_id = $('#jobId').text()
+            estimateData.base64_image = reader.result
+            console.log(estimateData)
+            $('#add-estimate').show()
+        }
+    }
+}
 //update the job information
 function updateJobInfo () {
 	jobNameId = "#edit-job-name";
