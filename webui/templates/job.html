@@ -127,13 +127,61 @@ $else:
 								<div class="col-sm-6 job-show"><p style="margin-bottom: 0px;">Manager: <span id="job-manager"> </span></p></div>
 							<div class="col-sm-6 job-edit"><p style="margin-bottom: 0px;">Manager: <select id="edit-job-manager"></select></p></div>
 	    				</div>
-	    				$if user['permissionLevel'].upper() == "ADMIN" or user['permissionLevel'].upper() == "MANAGER":
-	    					<div class="row">
-	    						<div class="col-sm-6 job-show"><p style="margin-bottom: 0px;">Budget availiable: <span id="job-budgetAvailable"> </span></p></div>
+						$if user['permissionLevel'].upper() == "ADMIN" or user['permissionLevel'].upper() == "MANAGER":
+							<div class="row">
+								<div class="col-sm-6 job-show"><p style="margin-bottom: 0px;">Budget availiable: <span id="job-budgetAvailable"> </span></p></div>
 								<div class="col-sm-6 job-edit"><p style="margin-bottom: 0px;">Budget availiable: <input id="edit-job-budgetAvailable" type="text" name="budget_available" size="10" /></p></div>
-	    						<div class="col-sm-6 job-show"><p style="margin-bottom: 0px;">Budget allocated: <span id="job-budgetAllocated"> </span></p></div>
+								<div class="col-sm-6 job-show"><p style="margin-bottom: 0px;">Budget allocated: <span id="job-budgetAllocated"> </span></p></div>
 								<div class="col-sm-6 job-edit"><p style="margin-bottom: 0px;">Budget allocated: <input id="edit-job-budgetAllocated" type="text" name="budget_allocated" size="10" /></p></div>
-	    					</div>
+							</div>
+							<div class="row">
+								<div class="col-sm-6">
+									<p style="margin-bottom: 0px;">
+										Scope: 
+										$if len(job['scopes']) == 0:
+											<span id="job-scope"></span>
+										$else:
+											<span id="job-scope"><a href="$job['scopes'][-1]['link']" target="blank">Current Scope</a></span>
+										<button id="button-add-scope"><span class="glyphicon glyphicon-plus"></span></button>
+										<span id="input-scope">
+											<input id="scope-file" type="file">
+										</span>
+										<span id="add-scope">
+											<button id="submit-scope"><span class="glyphicon glyphicon-ok"></span></button>
+											<button id="cancel-scope"><span class="glyphicon glyphicon-remove"></span></button>
+										</span>
+									</p>
+								</div>
+								<div class="col-sm-6">
+									<p style="margin-bottom: 0px;">
+										Estimate: 
+										$if len(job['fullEstimates']) == 0:
+											<span id="job-estimate"></span>
+										$else:
+											<span id="job-estimate"><a href="$job['fullEstimates'][-1]['link']" target="blank">Current Estimate</a></span>
+										<button id="button-add-estimate"><span class="glyphicon glyphicon-plus"></span></button>
+										<span id="input-estimate">
+											<input id="estimate-file" type="file">
+										</span>
+										<span id="add-estimate">
+											<button id="submit-estimate"><span class="glyphicon glyphicon-ok"></span></button>
+											<button id="cancel-estimate"><span class="glyphicon glyphicon-remove"></span></button>
+										</span>
+									
+								</div>
+							</div>
+						$else:
+							<div class="row">
+								<div class="col-sm-6">
+									<p style="margin-bottom: 0px;">
+										Scope: 
+										$if len(job['scopes']) == 0:
+											<span id="job-scope"></span>
+										$else:
+											<span id="job-scope"><a href="$job['scopes'][0]['link']">Current Scope</a></span>
+									</p>
+								</div>
+							</div>
 					</div>
 					<div class="card-block job-show" style="background-color: #f5f5f5;">
 						<p style="margin-bottom: 0px;"  id="job-desc">$job['description']</p>

@@ -26,7 +26,9 @@ urls = (
 	"/photo", "photo",
 	"/photoFolder", "photoFolder",
 	"/userActionItems", "userActionItems",
-	"/userJobs","userJobs"
+	"/userJobs","userJobs",
+	"/scope", "scope",
+	"/estimate", "estimate"
 	)
 
 app = web.application(urls, globals())
@@ -41,6 +43,80 @@ def set_headers():
 
 app.add_processor(web.loadhook(set_headers))
 
+class scope:
+	def GET(self):
+		return "Shhhh... the database is sleeping."
+	def POST(self):
+		passedData = dict(web.input())
+		try:
+			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'], company=passedData['company'])[0]
+		except IndexError:
+			return "403 Forbidden"
+		#use selected job, and current timestamp to ensure uniquness
+		# it shouldn't be possible to add two scopes to the same job
+		# in one millisecond
+		# ... I hope. 
+		newFileName = "/scopes/" 
+		newFileName += passedData['job_id'] + "_"
+		newFileName += datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S%f')[:-3]
+		newFileName += passedData['file_extension']
+
+		#add the image to s3
+
+		# get rid of the header that javascript uses.
+		img =  passedData['base64_image'].split(';base64,')[1]
+		newKey = s3Bucket.new_key(newFileName)
+		newKey.content_type = passedData['type'] # content type must be assigned before data
+		newKey.set_contents_from_string(base64.b64decode(img))
+		newKey.set_acl('public-read')
+
+		#add a link to the image to the database
+		#photo folders will be implemented at a later time
+		newFileLink = bucketHlq + newFileName
+
+		scope = db.insert('scopes', 
+					job_id=passedData['job_id'],
+					link=newFileLink,
+					company=passedData['company']
+				)
+		return json.dumps(makeDumpable(db.where('scopes', id=scope)[0]))
+class estimate:
+	def GET(self):
+		return "Shhhh... the database is sleeping."
+	def POST(self):
+		passedData = dict(web.input())
+		try:
+			reqUser = db.where('jobAppUsers', apiKey=passedData['apiKey'], company=passedData['company'])[0]
+		except IndexError:
+			return "403 Forbidden"
+		#use selected job, and current timestamp to ensure uniquness
+		# it shouldn't be possible to add two scopes to the same job
+		# in one millisecond
+		# ... I hope. 
+		newFileName = "/estimates/" 
+		newFileName += passedData['job_id'] + "_"
+		newFileName += datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S%f')[:-3]
+		newFileName += passedData['file_extension']
+
+		#add the image to s3
+
+		# get rid of the header that javascript uses.
+		img =  passedData['base64_image'].split(';base64,')[1]
+		newKey = s3Bucket.new_key(newFileName)
+		newKey.content_type = passedData['type'] # content type must be assigned before data
+		newKey.set_contents_from_string(base64.b64decode(img))
+		newKey.set_acl('public-read')
+
+		#add a link to the image to the database
+		#photo folders will be implemented at a later time
+		newFileLink = bucketHlq + newFileName
+
+		estimate = db.insert('fullEstimates', 
+					job_id=passedData['job_id'],
+					link=newFileLink,
+					company=passedData['company']
+				)
+		return json.dumps(makeDumpable(db.where('fullEstimates', id=estimate)[0]))
 class userJobs:
 	def GET(self):
 		passedData = dict(web.input())

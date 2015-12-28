@@ -375,7 +375,7 @@ def createScopesTbl(cursor):
 	  id INTEGER  NOT NULL AUTO_INCREMENT,
 	  job_id INTEGER,
 	  link TEXT(65535),
-	  upload_time TIMESTAMP,
+	  upload_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	  company TEXT(65535),
 	  PRIMARY KEY(id)
 	)
@@ -387,7 +387,7 @@ def createFullEstimatesTbl(cursor):
 	  id INTEGER  NOT NULL AUTO_INCREMENT,
 	  job_id INTEGER,
 	  link TEXT(65535),
-	  upload_time TIMESTAMP,
+	  upload_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	  company TEXT(65535),
 	  PRIMARY KEY(id)
 	)
