@@ -79,7 +79,7 @@ class scope:
 					link=newFileLink,
 					company=passedData['company']
 				)
-		return json.dumps(scope)
+		return json.dumps(makeDumpable(db.where('scopes', id=scope)[0]))
 class estimate:
 	def GET(self):
 		return "Shhhh... the database is sleeping."
@@ -116,7 +116,7 @@ class estimate:
 					link=newFileLink,
 					company=passedData['company']
 				)
-		return json.dumps(estimate)
+		return json.dumps(makeDumpable(db.where('fullEstimates', id=estimate)[0]))
 class userJobs:
 	def GET(self):
 		passedData = dict(web.input())

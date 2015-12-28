@@ -942,7 +942,10 @@ function jobEditInit(){
                 function(response) {
                     console.log("response: " + response)
                     if (apiResponseIsGood(response)) {
-                        console.log("Good.")
+                        obj = JSON.parse(response)
+                        $("#job-scope").html("<a href="+obj.link+">Current Scope</a>")
+                        $("#input-scope").hide();
+                        $('#add-scope').hide()
                     };
                 }
             );
@@ -963,7 +966,10 @@ function jobEditInit(){
                 function(response) {
                     console.log("response: " + response)
                     if (apiResponseIsGood(response)) {
-                        console.log("Good.")
+                        obj = JSON.parse(response)
+                        $("#job-estimate").html("<a href="+obj.link+">Current estimate</a>")
+                        $("#input-estimate").hide();
+                        $('#add-estimate').hide()
                     };
                 }
             );

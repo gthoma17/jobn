@@ -141,7 +141,7 @@ $else:
 										$if len(job['scopes']) == 0:
 											<span id="job-scope"></span>
 										$else:
-											<span id="job-scope">$job['scopes'][0]['link']</span>
+											<span id="job-scope"><a href="$job['scopes'][-1]['link']" target="blank">Current Scope</a></span>
 										<button id="button-add-scope"><span class="glyphicon glyphicon-plus"></span></button>
 										<span id="input-scope">
 											<input id="scope-file" type="file">
@@ -158,7 +158,7 @@ $else:
 										$if len(job['fullEstimates']) == 0:
 											<span id="job-estimate"></span>
 										$else:
-											<span id="job-estimate">$job['fullEstimates'][0]['link']</span>
+											<span id="job-estimate"><a href="$job['fullEstimates'][-1]['link']" target="blank">Current Estimate</a></span>
 										<button id="button-add-estimate"><span class="glyphicon glyphicon-plus"></span></button>
 										<span id="input-estimate">
 											<input id="estimate-file" type="file">
@@ -178,7 +178,7 @@ $else:
 										$if len(job['scopes']) == 0:
 											<span id="job-scope"></span>
 										$else:
-											<span id="job-scope">$job['scopes'][0]['link']</span>
+											<span id="job-scope"><a href="$job['scopes'][0]['link']">Current Scope</a></span>
 									</p>
 								</div>
 							</div>
