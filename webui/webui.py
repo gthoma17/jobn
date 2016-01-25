@@ -171,6 +171,8 @@ class newJob:
 		newJobVals['supervisor'] = None
 		newJobVals['manager'] = None
 		newJobVals['isNewJob'] = True
+		newJobVals['scopes'] = []
+		newJobVals['fullEstimates'] = []
 		return render.job(newJobVals, session.user, apiUrl)
 class login:
 	def GET(self):
