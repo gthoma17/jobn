@@ -281,17 +281,17 @@ $else:
 							<span class="text-center"><h3>$photoFolder['name']</h3></span>
 							<div class="text-center photoFolderSection card-group" id="folderContents_$photoFolder['id']">
 								$if photoFolder['id'] != -1:
-									<div class="upAFolderIconAndText col-xs-2">
+									<div class="upAFolderIconAndText col-xs-4 col-lg-2">
 										<a class="button show-photoFolder$photoFolder['parent_id'] photoFolderButton" id="goToParentFolder_$photoFolder['parent_id']"><span style="font-size:5em;" class="glyphicon glyphicon-circle-arrow-up"></span></a>
 										<h4>Go up a Folder</h4>
 									</div>
 								$for childFolder in [childFolder for childFolder in job['photoFolders'] if childFolder['parent_id'] == photoFolder['id']]:
-									<div class="photoFolderAndFolderName card col-xs-2">
+									<div class="photoFolderAndFolderName card col-xs-4 col-lg-2">
 										<a class="button show-photoFolder$childFolder['id'] photoFolderButton" id="show-photoFolder_$childFolder['id']"><span style="font-size:5em;" class="glyphicon glyphicon-folder-open"></span></a>
 										<h4>$childFolder['name']</h4>
 									</div>
 								$for photo in [photo for photo in job['photos'] if photo['folder_id'] == photoFolder['id']]:
-									<div class="individualPhoto card col-xs-2">
+									<div class="individualPhoto card col-xs-4 col-lg-2">
 										<a class="gallery" rel="gallery_$photo['folder_id']" href="$photo['link']"><div style="height: 100px"><img src="$photo['link']" class="card-img-top individualPhotoImg" style="max-height: 100%; max-width: 100%" alt=""/></div></a>
 									</div>
 							</div>
@@ -623,13 +623,13 @@ $if user['permissionLevel'].upper() == "ADMIN" or user['permissionLevel'].upper(
 		</div>
 	</div>
 	<div class="hidden" id="image-template" style="display:none;">
-    	<div class="individualPhoto col-xs-2">
+    	<div class="individualPhoto col-xs-4 col-lg-2">
 			<a class="gallery" rel="!gallery!" href="!url!"><div style="height: 100px"><img src="!url!" class="card-img-top" style="max-height: 100%; max-width: 100%" alt=""></div></a>
     	</div>
 	</div>
 	<!--Brianna the below div needs to match the folder div up there -->
 	<div class="hidden" id="imageFolder-template" style="display:none;">
-		<div class="photoFolderAndFolderName col-xs-2">
+		<div class="photoFolderAndFolderName col-xs-4 col-lg-2">
     		<a class="button show-photoFolder!id! photoFolderButton" id="show-photoFolder_!id!"><span style="font-size:5em;" class="glyphicon glyphicon-folder-open"></span></a>
         	<h4>!name!</h4>
     	</div>
@@ -638,7 +638,7 @@ $if user['permissionLevel'].upper() == "ADMIN" or user['permissionLevel'].upper(
 		<div class="photoFolder" id="photoFolder_!id!" style="display: block;">
             <span class="text-center"><h3>!name!</h3></span>
             <div class="text-center photoFolderSection card-group" id="folderContents_!id!">
-            	<div class="upAFolderIconAndText col-xs-2">
+            	<div class="upAFolderIconAndText col-xs-4 col-lg-2">
                 	<a class="button show-photoFolder!parent_id! photoFolderButton" id="goToParentFolder_!parent_id!"><span style="font-size:5em;" class="glyphicon glyphicon-circle-arrow-up"></span></a>
                     <h4>Go up a Folder</h4>
                 </div>
